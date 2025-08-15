@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useTheme } from "@/contexts/theme-provider";
 import { 
   Zap, 
   Plus, 
@@ -20,7 +21,9 @@ import {
   Mic,
   FileText,
   Link as LinkIcon,
-  ChevronDown
+  ChevronDown,
+  Moon,
+  Sun
 } from "lucide-react";
 import type { GenerateScriptRequest, PodcastScript } from "@shared/schema";
 
@@ -43,6 +46,7 @@ export default function Home() {
   const [generatedScript, setGeneratedScript] = useState<PodcastScript | null>(null);
 
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
   const charCount = inputText.length;
@@ -229,20 +233,28 @@ The question isn't whether your business should adopt AI, but rather how quickly
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <nav className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <CheckCircle className="h-8 w-8 text-primary" />
-                <span className="ml-2 text-xl font-bold text-slate-900">PodcastAI</span>
+                <span className="ml-2 text-xl font-bold text-slate-900 dark:text-white">PodcastAI</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" data-testid="button-documentation">
                 Documentation
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                data-testid="button-theme-toggle"
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
               <Button size="sm" data-testid="button-get-started">
                 Get Started
@@ -319,7 +331,7 @@ The question isn't whether your business should adopt AI, but rather how quickly
           
           {/* Input Section */}
           <div className="space-y-6" data-testid="input-section">
-            <Card className="shadow-lg">
+            <Card className="shadow-lg dark:bg-slate-800 dark:border-slate-700">
               <CardHeader>
                 <div className="flex items-center">
                   <Plus className="h-6 w-6 text-primary mr-3" />
@@ -395,7 +407,7 @@ The question isn't whether your business should adopt AI, but rather how quickly
                     
                     {/* Fetched Content Preview */}
                     {fetchedContent && (
-                      <Card className="bg-slate-50">
+                      <Card className="bg-slate-50 dark:bg-slate-700">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-sm font-semibold">Fetched Content Preview</CardTitle>
                           <p className="text-sm text-slate-600" data-testid="text-fetched-title">
@@ -502,7 +514,7 @@ The question isn't whether your business should adopt AI, but rather how quickly
             </Card>
 
             {/* API Status Card */}
-            <Card>
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="text-lg">API Status</CardTitle>
               </CardHeader>
@@ -534,7 +546,7 @@ The question isn't whether your business should adopt AI, but rather how quickly
             
             {/* Processing State */}
             {generateScriptMutation.isPending && (
-              <Card className="shadow-lg">
+              <Card className="shadow-lg dark:bg-slate-800 dark:border-slate-700">
                 <CardContent className="py-12">
                   <div className="text-center">
                     <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -576,7 +588,7 @@ The question isn't whether your business should adopt AI, but rather how quickly
 
             {/* Generated Script Output */}
             {generatedScript && generatedScript.script && (
-              <Card className="shadow-lg">
+              <Card className="shadow-lg dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader className="border-b">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-2xl">Generated Podcast Script</CardTitle>
