@@ -184,6 +184,50 @@ export default function Home() {
     exportScriptMutation.mutate({ id: generatedScript.id, format });
   };
 
+  const handleStartCreating = () => {
+    // Scroll to the input section
+    const inputSection = document.querySelector('[data-testid="input-section"]');
+    if (inputSection) {
+      inputSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleWatchDemo = () => {
+    // Fill with demo content and scroll to input section
+    const demoContent = `Welcome to Tech Talk Today! I'm your host, and today we're diving into the fascinating world of artificial intelligence and its impact on modern businesses.
+
+Artificial Intelligence has evolved from science fiction to an integral part of our daily operations. Companies across industries are leveraging AI to streamline processes, enhance customer experiences, and drive innovation.
+
+One key area where AI shines is in data analysis. Traditional methods of processing large datasets could take weeks or months. With AI-powered analytics, businesses can extract meaningful insights in real-time, enabling faster decision-making and competitive advantages.
+
+Customer service is another domain transformed by AI. Chatbots and virtual assistants now handle routine inquiries 24/7, allowing human agents to focus on complex issues that require empathy and creative problem-solving.
+
+However, implementing AI isn't without challenges. Organizations must consider data privacy, ethical implications, and the need for employee retraining. The key is to approach AI adoption strategically, starting with pilot projects and scaling successful implementations.
+
+As we look to the future, AI will continue evolving. Machine learning models are becoming more sophisticated, and we're seeing breakthroughs in natural language processing, computer vision, and predictive analytics.
+
+The question isn't whether your business should adopt AI, but rather how quickly you can integrate it effectively while maintaining your core values and serving your customers better.`;
+    
+    setInputText(demoContent);
+    setInputTab("text");
+    setShowName("Tech Talk Today");
+    setPodcastStyle("professional");
+    setTargetDuration("10-20");
+    
+    // Scroll to input section
+    setTimeout(() => {
+      const inputSection = document.querySelector('[data-testid="input-section"]');
+      if (inputSection) {
+        inputSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+    
+    toast({
+      title: "Demo content loaded!",
+      description: "Sample content has been added. Try generating a script!",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Navigation */}
@@ -220,10 +264,21 @@ export default function Home() {
               AI-powered tool that converts transcripts and articles into polished podcast scripts with intro/outro segments, show notes, and seamless transitions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-primary hover:bg-slate-50 shadow-xl" data-testid="button-start-creating">
+              <Button 
+                onClick={handleStartCreating}
+                size="lg" 
+                className="bg-white text-primary hover:bg-slate-50 shadow-xl" 
+                data-testid="button-start-creating"
+              >
                 Start Creating
               </Button>
-              <Button variant="outline" size="lg" className="border-2 border-white text-white hover:bg-white hover:text-primary" data-testid="button-watch-demo">
+              <Button 
+                onClick={handleWatchDemo}
+                variant="outline" 
+                size="lg" 
+                className="border-2 border-white text-white hover:bg-white hover:text-primary" 
+                data-testid="button-watch-demo"
+              >
                 Watch Demo
               </Button>
             </div>
@@ -263,7 +318,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* Input Section */}
-          <div className="space-y-6">
+          <div className="space-y-6" data-testid="input-section">
             <Card className="shadow-lg">
               <CardHeader>
                 <div className="flex items-center">
