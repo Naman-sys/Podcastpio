@@ -389,7 +389,7 @@ export default function Home() {
                           <label className="block text-sm font-medium text-slate-700 mb-1">
                             Podcast Style
                           </label>
-                          <Select value={podcastStyle} onValueChange={setPodcastStyle}>
+                          <Select value={podcastStyle} onValueChange={(value) => setPodcastStyle(value as typeof podcastStyle)}>
                             <SelectTrigger data-testid="select-podcast-style">
                               <SelectValue />
                             </SelectTrigger>
@@ -405,7 +405,7 @@ export default function Home() {
                           <label className="block text-sm font-medium text-slate-700 mb-1">
                             Target Duration
                           </label>
-                          <Select value={targetDuration} onValueChange={setTargetDuration}>
+                          <Select value={targetDuration} onValueChange={(value) => setTargetDuration(value as typeof targetDuration)}>
                             <SelectTrigger data-testid="select-target-duration">
                               <SelectValue />
                             </SelectTrigger>

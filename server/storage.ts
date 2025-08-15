@@ -24,7 +24,7 @@ export class MemStorage implements IStorage {
       ...insertScript, 
       id,
       createdAt: new Date()
-    };
+    } as PodcastScript;
     this.scripts.set(id, script);
     return script;
   }
