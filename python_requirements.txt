@@ -1,0 +1,14 @@
+# Python + Streamlit Podcast Script Generator Requirements
+# Install with: pip install -r python_requirements.txt
+
+streamlit==1.40.2
+google-generativeai==0.8.3
+beautifulsoup4==4.12.2
+requests==2.31.0
+pydantic==2.10.3
+python-dotenv==1.0.1
+pytz==2024.2
+
+# Optional dependencies for enhanced functionality
+Pillow==10.4.0
+plotly==5.24.1
