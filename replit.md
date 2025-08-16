@@ -5,6 +5,7 @@ This is a podcast script generation application that converts text content or we
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Architecture preference: JSON/React format only (no Python components)
 
 # System Architecture
 
