@@ -402,8 +402,9 @@ def display_navigation():
         padding: 1rem 2rem;
         border-radius: 0.5rem;
         margin-bottom: 2rem;
+        text-align: center; 
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
     }
     .nav-title {
