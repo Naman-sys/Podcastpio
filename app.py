@@ -32,6 +32,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+GEMINI_API_KEY = "AIzaSyCKym897ZvCzjWNUUByDej1R39zqgVOP-4"
 try:
     import google.generativeai as genai
     GENAI_AVAILABLE = True
@@ -304,7 +305,7 @@ Format the response as JSON with this exact structure:
 Make the script conversational, engaging, and professional. Include music cues like [INTRO MUSIC FADES IN] and [TRANSITION MUSIC]. Ensure natural flow between segments."""
 
     try:
-        api_key = get_gemini_api_key()
+        api_key = GEMINI_API_KEY  # ✅ use hardcoded key
         if not api_key or not GENAI_AVAILABLE or not genai:
             raise Exception("Gemini API key not found or library not available")
         
@@ -343,6 +344,7 @@ Make the script conversational, engaging, and professional. Include music cues l
     except Exception as e:
         st.warning(f"Gemini API unavailable ({str(e)}). Using fallback script generation...")
         return generate_fallback_script(content, style, duration, show_name)
+
 
 def fetch_content_from_url(url: str) -> Dict[str, Any]:
     """Fetch and extract content from a URL"""
@@ -542,54 +544,54 @@ def display_hero_section():
 #     progress_html += "</div>"
 #     st.markdown(progress_html, unsafe_allow_html=True)
 
-def display_api_setup():
-    """Display API key setup and status"""
-    with st.container():
-        st.subheader("🔑 API Configuration")
+# def display_api_setup():
+#     """Display API key setup and status"""
+#     with st.container():
+#         st.subheader("🔑 API Configuration")
         
-        current_key = get_gemini_api_key()
+#         current_key = get_gemini_api_key()
         
-        # API Key Input
-        with st.expander("🔐 Gemini API Key Setup", expanded=not current_key):
-            st.write("**Get your free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)**")
+#         # API Key Input
+#         with st.expander("🔐 Gemini API Key Setup", expanded=not current_key):
+#             st.write("**Get your free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)**")
             
-            api_key_input = st.text_input(
-                "Enter your Gemini API Key:",
-                type="password",
-                value=current_key if current_key else "",
-                placeholder="Enter your API key here...",
-                help="Your API key is stored securely in this session only"
-            )
+#             api_key_input = st.text_input(
+#                 "Enter your Gemini API Key:",
+#                 type="password",
+#                 value=current_key if current_key else "",
+#                 placeholder="Enter your API key here...",
+#                 help="Your API key is stored securely in this session only"
+#             )
             
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                if st.button("🔄 Update API Key", disabled=not api_key_input):
-                    if api_key_input:
-                        st.session_state.gemini_api_key = api_key_input
-                        if configure_gemini_api(api_key_input):
-                            st.success("✅ API key configured successfully!")
-                        else:
-                            st.error("❌ Failed to configure API key")
-                        st.rerun()
+#             col1, col2 = st.columns([1, 1])
+#             with col1:
+#                 if st.button("🔄 Update API Key", disabled=not api_key_input):
+#                     if api_key_input:
+#                         st.session_state.gemini_api_key = api_key_input
+#                         if configure_gemini_api(api_key_input):
+#                             st.success("✅ API key configured successfully!")
+#                         else:
+#                             st.error("❌ Failed to configure API key")
+#                         st.rerun()
             
-            with col2:
-                if st.button("🗑️ Clear Key"):
-                    if 'gemini_api_key' in st.session_state:
-                        del st.session_state.gemini_api_key
-                    st.rerun()
+#             with col2:
+#                 if st.button("🗑️ Clear Key"):
+#                     if 'gemini_api_key' in st.session_state:
+#                         del st.session_state.gemini_api_key
+#                     st.rerun()
         
-        # API Status Display
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.write("**Gemini AI Status:**")
-        with col2:
-            if current_key:
-                st.success("🟢 Connected")
-            else:
-                st.error("🔴 Not Connected")
+#         # API Status Display
+#         col1, col2 = st.columns([3, 1])
+#         with col1:
+#             st.write("**Gemini AI Status:**")
+#         with col2:
+#             if current_key:
+#                 st.success("🟢 Connected")
+#             else:
+#                 st.error("🔴 Not Connected")
         
-        if not current_key:
-            st.info("💡 **Without an API key:** The app will use fallback script generation with realistic content structure.")
+#         if not current_key:
+#             st.info("💡 **Without an API key:** The app will use fallback script generation with realistic content structure.")
 
 def export_script_as_text(script: PodcastScript) -> str:
     """Export script in text format"""
