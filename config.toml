@@ -1,6 +1,7 @@
 [server]
-port = 8501
+port = 5000
 address = "0.0.0.0"
+headless = true
 maxUploadSize = 200
 
 [theme]
