@@ -66,12 +66,18 @@ st.markdown(
     .stats-card {
         background: #1e293b;
         border-radius: 12px;
-        padding: 12px;
-        margin-top: 16px;
-        text-align: center;
+        padding: 14px;
+        margin: 10px 0 20px 0;
     }
-    .stats-card h3 { margin: 0; font-size: 1.2rem; color: var(--brand); }
-    .stats-card p { margin: 4px 0; font-size: .9rem; color: var(--muted); }
+    .stats-card h3 {
+        margin: 0 0 6px 0;
+        font-size: 1.1rem;
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .stats-card p { margin: 3px 0; font-size: .9rem; color: var(--muted); }
 </style>
 """,
     unsafe_allow_html=True,
@@ -309,7 +315,13 @@ with left:
         }
         st.success("🎉 Script generated!")
 
-    # Show summary card in blank space
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with right:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("🎬 Generated Script")
+
+    # Place summary card here on right side
     if st.session_state.last_summary:
         summ = st.session_state.last_summary
         st.markdown(
@@ -324,11 +336,6 @@ with left:
             unsafe_allow_html=True,
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with right:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("🎬 Generated Script")
     if st.session_state.current_id:
         ps = st.session_state.history[st.session_state.current_id]
         s = ps.script
@@ -345,6 +352,7 @@ with right:
             st.download_button("📊 Export JSON", data=json.dumps(asdict(ps), indent=2), file_name="podcast.json", use_container_width=True)
     else:
         st.info("👈 Add content and click Generate.")
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
