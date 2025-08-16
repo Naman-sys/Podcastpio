@@ -466,69 +466,69 @@ def display_hero_section():
     </div>
     """, unsafe_allow_html=True)
 
-def display_workflow_progress(current_step: int = 1):
-    """Display workflow progress indicator"""
-    steps = ["Input Content", "AI Processing", "Export Script"]
+# def display_workflow_progress(current_step: int = 1):
+#     """Display workflow progress indicator"""
+#     steps = ["Input Content", "AI Processing", "Export Script"]
     
-    progress_html = """
-    <style>
-    .workflow-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 2rem 0;
-        padding: 1rem;
-    }
-    .workflow-step {
-        display: flex;
-        align-items: center;
-        margin: 0 1rem;
-    }
-    .step-circle {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 0.5rem;
-    }
-    .step-active {
-        background-color: #3b82f6;
-        color: white;
-    }
-    .step-inactive {
-        background-color: #e5e7eb;
-        color: #6b7280;
-    }
-    .step-connector {
-        width: 3rem;
-        height: 2px;
-        background-color: #e5e7eb;
-        margin: 0 1rem;
-    }
-    </style>
+#     progress_html = """
+#     <style>
+#     .workflow-container {
+#         display: flex;
+#         justify-content: center;
+#         align-items: center;
+#         margin: 2rem 0;
+#         padding: 1rem;
+#     }
+#     .workflow-step {
+#         display: flex;
+#         align-items: center;
+#         margin: 0 1rem;
+#     }
+#     .step-circle {
+#         width: 2rem;
+#         height: 2rem;
+#         border-radius: 50%;
+#         display: flex;
+#         align-items: center;
+#         justify-content: center;
+#         font-weight: bold;
+#         margin-right: 0.5rem;
+#     }
+#     .step-active {
+#         background-color: #3b82f6;
+#         color: white;
+#     }
+#     .step-inactive {
+#         background-color: #e5e7eb;
+#         color: #6b7280;
+#     }
+#     .step-connector {
+#         width: 3rem;
+#         height: 2px;
+#         background-color: #e5e7eb;
+#         margin: 0 1rem;
+#     }
+#     </style>
     
-    <div class="workflow-container">
-    """
+#     <div class="workflow-container">
+#     """
     
-    for i, step in enumerate(steps, 1):
-        is_active = i <= current_step
-        circle_class = "step-active" if is_active else "step-inactive"
+#     for i, step in enumerate(steps, 1):
+#         is_active = i <= current_step
+#         circle_class = "step-active" if is_active else "step-inactive"
         
-        progress_html += f"""
-        <div class="workflow-step">
-            <div class="step-circle {circle_class}">{i}</div>
-            <span style="color: {'#3b82f6' if is_active else '#6b7280'}">{step}</span>
-        </div>
-        """
+#         progress_html += f"""
+#         <div class="workflow-step">
+#             <div class="step-circle {circle_class}">{i}</div>
+#             <span style="color: {'#3b82f6' if is_active else '#6b7280'}">{step}</span>
+#         </div>
+#         """
         
-        if i < len(steps):
-            progress_html += '<div class="step-connector"></div>'
+#         if i < len(steps):
+#             progress_html += '<div class="step-connector"></div>'
     
-    progress_html += "</div>"
-    st.markdown(progress_html, unsafe_allow_html=True)
+#     progress_html += "</div>"
+#     st.markdown(progress_html, unsafe_allow_html=True)
 
 def display_api_setup():
     """Display API key setup and status"""
