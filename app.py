@@ -819,7 +819,7 @@ def main():
     
     with col2:
         # Display API Configuration
-        display_api_setup()
+        # display_api_setup()
         
         # Display Generated Script
         if st.session_state.current_script and st.session_state.current_script in st.session_state.generated_scripts:
