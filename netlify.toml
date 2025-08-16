@@ -6,8 +6,8 @@
   command = "npm ci && npm run build && cp netlify/_redirects dist/public/_redirects"
 
 [build.environment]
-  NODE_VERSION = "22"
-  NPM_VERSION = "10"
+  NODE_VERSION = "20.18.0"
+  NPM_VERSION = "10.8.2"
   NPM_FLAGS = "--legacy-peer-deps"
   NODE_ENV = "production"
 
