@@ -14,15 +14,10 @@ Run:
 
 from __future__ import annotations
 
-import os
-import re
-import json
-import uuid
-import html
-import requests
+import os, re, json, uuid, html, requests
 from dataclasses import dataclass, asdict
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List
 
 import streamlit as st
 from bs4 import BeautifulSoup
@@ -50,7 +45,6 @@ st.markdown(
         --brand: #6e7cff;
         --brand-2: #8a5cf6;
         --ok: #10b981;
-        --warn: #f59e0b;
         --err: #ef4444;
     }
     .stApp { background: var(--bg); color: var(--text); }
@@ -60,11 +54,9 @@ st.markdown(
         padding: 24px 22px;
         color: white;
         margin: 12px 0 22px 0;
-        box-shadow: 0 10px 30px rgba(108, 99, 255, 0.25);
         text-align: center;
     }
     .hero h1 { margin: 0 0 6px 0; font-size: 2rem; font-weight: 800; }
-    .hero p  { margin: 0; opacity: .92; }
     .card {
         background: var(--panel);
         border: 1px solid rgba(255,255,255,.06);
@@ -100,12 +92,6 @@ st.markdown(
     .stTabs [role="tab"][aria-selected="true"] {
         background: var(--brand);
         color: white;
-    }
-    .streamlit-expanderHeader {
-        background: #0f172a !important;
-        color: var(--text) !important;
-        border-radius: 10px !important;
-        border: 1px solid rgba(255,255,255,.06);
     }
     .muted { color: var(--muted); font-size: .9rem; }
 </style>
@@ -200,7 +186,26 @@ def try_gemini_generate(prompt: str) -> Optional[str]:
         return None
 
 # =========================
-# Script Generation (basic)
+# Content Fetcher
+# =========================
+
+def fetch_article(url: str, max_chars: int = 8000) -> Optional[str]:
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (PodcastAI/1.0)"}
+        r = requests.get(url, headers=headers, timeout=10)
+        r.raise_for_status()
+    except Exception:
+        return None
+
+    soup = BeautifulSoup(r.text, "html.parser")
+    for tag in soup(["script", "style", "nav", "footer", "header", "noscript", "aside", "iframe"]):
+        tag.decompose()
+    text = soup.get_text(" ", strip=True)
+    text = re.sub(r"\s+", " ", html.unescape(text or "")).strip()
+    return text[:max_chars] if len(text) >= 120 else None
+
+# =========================
+# Script Generation
 # =========================
 
 def local_fallback_script(content: str, style: str, duration: str, show_name: str) -> GeneratedScript:
@@ -220,23 +225,7 @@ def generate_script(content: str, style: str, duration: str, show_name: str) -> 
 You are a podcast writer. Style: {style}, Duration: {duration} minutes, Show: {show_name}.
 Content:
 \"\"\"{content[:3000]}\"\"\"
-
-Return JSON:
-{{
-  "intro": "string",
-  "main_content": "string",
-  "outro": "string",
-  "show_notes": {{
-    "key_topics": ["string"],
-    "resources": ["string"],
-    "timestamps": [{{"time":"0:00","topic":"Intro"}}],
-    "episode_details": {{
-      "duration": "string",
-      "category": "string",
-      "format": "string"
-    }}
-  }}
-}}
+Return JSON with intro, main_content, outro, and show_notes.
 """
     llm_text = try_gemini_generate(prompt)
     if llm_text:
@@ -304,17 +293,36 @@ left, right = st.columns([1, 1], gap="large")
 with left:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("📝 Input")
-    raw_text = st.text_area("Paste text...", height=220, placeholder="Paste article…", label_visibility="collapsed")
+    tabs = st.tabs(["✏️ Manual Text", "🔗 URL Import"])
+
+    raw_text, url = "", ""
+    with tabs[0]:
+        raw_text = st.text_area("Paste text...", height=220, placeholder="Paste article…", label_visibility="collapsed")
+    with tabs[1]:
+        url = st.text_input("Paste article URL", placeholder="https://example.com/article")
+        if st.button("Fetch", use_container_width=True, disabled=not url):
+            with st.spinner("Fetching..."):
+                text = fetch_article(url)
+                if text:
+                    st.session_state.fetched = text
+                    st.success("✅ Content fetched.")
+                else:
+                    st.error("Failed to extract content.")
+        if st.session_state.fetched:
+            st.text_area("Preview", st.session_state.fetched[:1000], height=160, label_visibility="collapsed")
+
+    st.markdown("---")
     style = st.selectbox("Style", ["conversational", "professional", "educational", "interview"])
     duration = st.selectbox("Duration", ["5-10", "10-20", "20-30", "30+"])
     show_name = st.text_input("Show Name", value="The Show")
-    content = raw_text.strip()
-    st.markdown("</div>", unsafe_allow_html=True)
-    if st.button("⚡ Generate Script", use_container_width=True, disabled=len(content) < 20):
-        ps = build_podcast_script(content, "text", None, style, duration, show_name)
+
+    content = (raw_text.strip() or st.session_state.fetched or "")
+    if st.button("⚡ Generate Script", use_container_width=True, disabled=len(content) < 40):
+        ps = build_podcast_script(content, "text" if raw_text else "url", url if url else None, style, duration, show_name)
         st.session_state.history[ps.id] = ps
         st.session_state.current_id = ps.id
         st.success("🎉 Script generated!")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -327,8 +335,12 @@ with right:
         with t2: st.text_area("Main", s.main_content, height=220, label_visibility="collapsed")
         with t3: st.text_area("Outro", s.outro, height=220, label_visibility="collapsed")
         with t4: st.json(asdict(s.show_notes))
-        st.download_button("📄 Export TXT", data=script_to_txt(ps), file_name="podcast.txt")
-        st.download_button("📊 Export JSON", data=json.dumps(asdict(ps), indent=2), file_name="podcast.json")
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button("📄 Export TXT", data=script_to_txt(ps), file_name="podcast.txt", use_container_width=True)
+        with col2:
+            st.download_button("📊 Export JSON", data=json.dumps(asdict(ps), indent=2), file_name="podcast.json", use_container_width=True)
     else:
         st.info("👈 Add content and click Generate.")
     st.markdown("</div>", unsafe_allow_html=True)
