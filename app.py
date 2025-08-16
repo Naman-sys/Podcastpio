@@ -33,7 +33,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Polished dark theme
+# Dark theme
 st.markdown(
     """
 <style>
@@ -63,37 +63,15 @@ st.markdown(
         border-radius: 14px;
         padding: 16px 16px 12px 16px;
     }
-    textarea, .stTextInput>div>div>input {
-        background: #0f172a !important;
-        color: var(--text) !important;
-        border-radius: 10px !important;
-        border: 1px solid rgba(255,255,255,.1) !important;
+    .stats-card {
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 16px;
+        text-align: center;
     }
-    .stSelectbox>div>div {
-        background: #0f172a !important;
-        border-radius: 10px !important;
-    }
-    div.stButton>button {
-        background: var(--brand) !important;
-        color: white !important;
-        border-radius: 10px !important;
-        font-weight: 700;
-        padding: .6rem 1rem;
-    }
-    div.stButton>button:hover { filter: brightness(1.08); }
-    .stTabs [role="tab"] {
-        background: #0f172a;
-        color: var(--muted);
-        border-radius: 10px;
-        padding: .5rem .9rem;
-        margin-right: .4rem;
-        border: 1px solid rgba(255,255,255,.06);
-    }
-    .stTabs [role="tab"][aria-selected="true"] {
-        background: var(--brand);
-        color: white;
-    }
-    .muted { color: var(--muted); font-size: .9rem; }
+    .stats-card h3 { margin: 0; font-size: 1.2rem; color: var(--brand); }
+    .stats-card p { margin: 4px 0; font-size: .9rem; color: var(--muted); }
 </style>
 """,
     unsafe_allow_html=True,
@@ -149,6 +127,8 @@ def _init_state():
         st.session_state.current_id = None
     if "fetched" not in st.session_state:
         st.session_state.fetched = None
+    if "last_summary" not in st.session_state:
+        st.session_state.last_summary = None
 
 _init_state()
 
@@ -321,7 +301,29 @@ with left:
         ps = build_podcast_script(content, "text" if raw_text else "url", url if url else None, style, duration, show_name)
         st.session_state.history[ps.id] = ps
         st.session_state.current_id = ps.id
+        st.session_state.last_summary = {
+            "words": ps.word_count,
+            "chars": ps.char_count,
+            "duration": ps.target_duration,
+            "title": ps.title
+        }
         st.success("🎉 Script generated!")
+
+    # Show summary card in blank space
+    if st.session_state.last_summary:
+        summ = st.session_state.last_summary
+        st.markdown(
+            f"""
+<div class="stats-card">
+    <h3>📊 Quick Episode Summary</h3>
+    <p><b>Title:</b> {summ['title']}</p>
+    <p><b>Words:</b> {summ['words']} | <b>Characters:</b> {summ['chars']}</p>
+    <p><b>Target Duration:</b> {summ['duration']} minutes</p>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
