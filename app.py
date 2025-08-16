@@ -817,7 +817,7 @@ def main():
             else:
                 st.error("⚠️ Please provide at least 10 characters of content")
     
-    with col2:
+    # with col2:
         # Display API Configuration
         # display_api_setup()
         
