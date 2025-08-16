@@ -23,8 +23,10 @@ import requests
 from bs4 import BeautifulSoup
 try:
     import google.generativeai as genai
+    GENAI_AVAILABLE = True
 except ImportError:
     genai = None
+    GENAI_AVAILABLE = False
 from dotenv import load_dotenv
 import time
 
@@ -47,11 +49,12 @@ def get_gemini_api_key():
 
 def configure_gemini_api(api_key: str):
     """Configure Gemini API with the provided key"""
-    if api_key and genai:
+    if api_key and GENAI_AVAILABLE and genai:
         try:
-            genai.configure(api_key=api_key)
+            genai.configure(api_key=api_key)  # type: ignore
             return True
-        except Exception:
+        except Exception as e:
+            st.error(f"Failed to configure Gemini API: {str(e)}")
             return False
     return False
 
@@ -291,13 +294,14 @@ Make the script conversational, engaging, and professional. Include music cues l
 
     try:
         api_key = get_gemini_api_key()
-        if not api_key or not genai:
+        if not api_key or not GENAI_AVAILABLE or not genai:
             raise Exception("Gemini API key not found or library not available")
         
         # Configure API with current key
-        configure_gemini_api(api_key)
+        if not configure_gemini_api(api_key):
+            raise Exception("Failed to configure Gemini API")
             
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        model = genai.GenerativeModel('gemini-1.5-pro')  # type: ignore
         response = model.generate_content(
             f"{system_prompt}\n\nContent: {content}",
             generation_config={

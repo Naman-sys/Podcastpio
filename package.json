@@ -1,9 +1,8 @@
 {
-  "name": "streamlit-app",
+  "name": "streamlit-podcast-generator",
   "version": "1.0.0",
   "scripts": {
-    "dev": "echo 'Use: python -m streamlit run app.py'",
-    "start": "echo 'Use: python -m streamlit run app.py'",
-    "build": "echo 'Python Streamlit app - no build needed'"
+    "dev": "python -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0",
+    "start": "python -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0"
   }
 }
