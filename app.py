@@ -1,11 +1,3 @@
-"""
-PodcastAI — Streamlit App (Extended Output)
--------------------------------------------
-• Generates longer, more detailed podcast scripts.
-• Uses Google Gemini API if available (with higher token limit).
-• Fallback is enhanced with multi-paragraph output.
-"""
-
 from __future__ import annotations
 import os, re, json, uuid, html, requests
 from dataclasses import dataclass, asdict
@@ -111,7 +103,7 @@ def try_gemini_generate(prompt: str):
         model = genai.GenerativeModel("gemini-1.5-pro")
         resp = model.generate_content(
             prompt,
-            generation_config={"max_output_tokens": 8192}  # 🔥 increased length
+            generation_config={"max_output_tokens": 8192}
         )
         return getattr(resp, "text", None)
     except Exception:
@@ -137,27 +129,23 @@ def fetch_article(url: str, max_chars=10000):
 # =====================
 def local_fallback_script(content, style, duration, show_name):
     intro = f"""[INTRO MUSIC FADES IN]
-Welcome to {show_name}, your trusted source for deep dives and engaging stories. 
-Today’s episode brings you an in-depth discussion filled with insights, stories, and reflections.
+Welcome to {show_name}, your trusted source for deep dives and engaging stories.
+This episode unpacks key issues in a rich, detailed way.
 """
     main = f"""[MAIN DISCUSSION]
-We’re breaking the topic into three detailed segments:
-1. **Background** — setting the stage with essential context.
-2. **Key Insights** — uncovering surprising facts, trends, and narratives.
-3. **Implications** — why this matters for everyday life and industry.
-Each section is designed to keep the conversation flowing naturally, while still being rich in value.
+We’ll break the discussion into multiple sections, exploring background, insights, and impacts.
+Each section is designed to be in-depth and easy to follow.
 """
     outro = f"""[OUTRO]
-That’s it for today’s episode of {show_name}. We hope you enjoyed the journey and found the insights useful.
-Stay tuned for the next one, and don’t forget to subscribe. Until then, take care and keep exploring!
+That’s all for today’s episode of {show_name}. Don’t forget to subscribe and stay tuned!
 """
     notes = ShowNotes(
-        key_topics=["Background", "Key Insights", "Implications"],
-        resources=["Visit our website", "Follow us on socials"],
+        key_topics=["Background", "Insights", "Impacts"],
+        resources=["Visit our site", "Follow us on socials"],
         timestamps=[
             {"time":"0:00","topic":"Intro"},
-            {"time":"2:00","topic":"Main Discussion"},
-            {"time":"8:00","topic":"Outro"},
+            {"time":"3:00","topic":"Main Discussion"},
+            {"time":"15:00","topic":"Outro"},
         ],
         episode_details=EpisodeDetails(duration=f"{duration} min", category="General", format=style)
     )
@@ -168,30 +156,30 @@ Stay tuned for the next one, and don’t forget to subscribe. Until then, take c
 # =====================
 def generate_script(content, style, duration, show_name):
     prompt = f"""
-You are a professional podcast script writer. Generate a **long and detailed podcast script**
-for a show called "{show_name}". 
+You are a professional podcast script writer. Generate a **long, detailed podcast script**.
 
-Style: {style}  
-Target Duration: {duration} minutes  
+Show: "{show_name}"
+Style: {style}
+Target Duration: {duration} minutes
 
-The script MUST include:  
-- A compelling INTRO (at least 2 paragraphs).  
-- A MAIN section with **3–5 subsections**, each detailed and conversational.  
-- A memorable OUTRO (1–2 paragraphs).  
-- Show Notes with key topics, resources, and timestamps.  
+Include:
+- A long INTRO (2–3 paragraphs)
+- MAIN section with **3–5 subsections**
+- A strong OUTRO
+- Show Notes with topics, resources, and timestamps
 
-Here’s the content to base it on:
+Base it on this content:
 {content[:8000]}
 """
     llm_text = try_gemini_generate(prompt)
     if llm_text:
         return GeneratedScript(
-            intro=llm_text.split("MAIN")[0] if "MAIN" in llm_text else llm_text[:500],
+            intro=llm_text[:800],
             main_content=llm_text,
-            outro="Thanks for tuning in — see you next episode!",
+            outro="Thanks for tuning in — see you next time!",
             show_notes=ShowNotes(
                 key_topics=["Deep Dive", "Insights", "Implications"],
-                resources=["Follow for updates", "More resources available"],
+                resources=["Follow for updates", "More resources online"],
                 timestamps=[{"time":"0:00","topic":"Intro"},{"time":"10:00","topic":"Main"},{"time":"25:00","topic":"Outro"}],
                 episode_details=EpisodeDetails(duration=duration, category="General", format=style)
             )
@@ -259,7 +247,7 @@ with right:
         with t1: st.text_area("Intro", s.intro, height=200)
         with t2: st.text_area("Main", s.main_content, height=300)
         with t3: st.text_area("Outro", s.outro, height=150)
-        with t4: st.write(s.show_notes)
+        with t4: st.json(asdict(s.show_notes))   # ✅ fixed crash
 
         e1, e2 = st.columns(2)
         with e1: st.download_button("📄 Export TXT", data=s.intro+s.main_content+s.outro, file_name=f"{ps.id}.txt")
