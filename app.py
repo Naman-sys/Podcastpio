@@ -299,12 +299,6 @@ with left:
         st.session_state.current_id = ps.id
         st.success("🎉 Script generated!")
 
-    if st.session_state.current_id:
-        ps = st.session_state.history[st.session_state.current_id]
-        st.markdown("---")
-        st.markdown("### 📊 Quick Episode Summary")
-        st.info(f"**Title:** {ps.title}\n\n**Words:** {ps.word_count} | **Characters:** {ps.char_count}\n\n**Target Duration:** {ps.target_duration} minutes")
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -328,9 +322,16 @@ with right:
             st.markdown("**Episode Details:**")
             st.write(s.show_notes.episode_details.__dict__)
 
+        # Export buttons side-by-side
         e1, e2 = st.columns(2)
         with e1: st.download_button("📄 Export TXT", data=script_to_txt(ps), file_name=f"{ps.id}.txt")
         with e2: st.download_button("📊 Export JSON", data=json.dumps(asdict(ps), indent=2), file_name=f"{ps.id}.json")
+
+        # Now Quick Summary BELOW the export buttons
+        st.markdown("---")
+        st.markdown("### 📊 Quick Episode Summary")
+        st.info(f"**Title:** {ps.title}\n\n**Words:** {ps.word_count} | **Characters:** {ps.char_count}\n\n**Target Duration:** {ps.target_duration} minutes")
+
     else:
         st.info("👈 Add content and generate a script.")
 
