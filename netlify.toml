@@ -3,7 +3,7 @@
 [build]
   base = "."
   publish = "dist/public"
-  command = "npm run build"
+  command = "npm install && npx vite build && cp netlify/_redirects dist/public/_redirects"
 
 [build.environment]
   NODE_VERSION = "20"

@@ -1,0 +1,96 @@
+The Netlify deploy errored, with the following guidance provided:
+
+### Diagnosis
+The build failure is caused by the command `vite build` not being recognized, resulting in the error `sh: 1: vite: not found` [#L85](#L85).
+
+### Solution
+1. **Missing Dependency:** The error indicates that `vite` is not found, which suggests that the Vite package is not installed.
+   
+2. **Solution Steps:**
+   - Ensure that `vite` is listed as a dependency in the `package.json` file.
+   - Verify that the `vite` package is added to the `package.json` by running:
+     ```bash
+     npm install vite --save-dev
+     ```
+   - If `vite` is already in the `package.json`, confirm that it was committed to the repository.
+   
+3. After confirming the presence of `vite` in the dependencies and committing any changes, trigger a new build to see if the issue is resolved.
+
+The relevant error logs are:
+
+Line 0: build-image version: e5074bde24e53715f94c72a3902b7868fbfe84e1 (noble)
+Line 1: buildbot version: e2595138a7c5ab9f292ccfa2932733582fe0dc65
+Line 2: Fetching cached dependencies
+Line 3: Failed to fetch cache, continuing with build
+Line 4: Starting to prepare the repo for build
+Line 5: No cached dependencies found. Cloning fresh repo
+Line 6: git clone --filter=blob:none https://github.com/Naman-sys/Podcastpio
+Line 7: Preparing Git Reference refs/heads/main
+Line 8: Custom functions path detected. Proceeding with the specified path: 'netlify/functions'
+Line 9: Custom build command detected. Proceeding with the specified command: 'npm run build'
+Line 10: Starting to install dependencies
+Line 11: Downloading and installing node v20.19.4...
+Line 12: Downloading https://nodejs.org/dist/v20.19.4/node-v20.19.4-linux-x64.tar.xz...
+Line 13: Computing checksum with sha256sum
+Line 50: npm packages installed
+Line 51: Successfully installed dependencies
+Line 52: Starting build script
+Line 53: Detected 1 framework(s)
+Line 54: "vite" at version "5.4.19"
+Line 55: Section completed: initializing
+Line 56: [96m[1m​[22m[39m
+Line 57: [96m[1mNetlify Build                                                 [22m[39m
+Line 58: [96m[1m────────────────────────────────────────────────────────────────[22m[39m
+Line 59: [36m[1m​[22m[39m
+Line 60: Failed during stage 'building site': Build script returned non-zero exit code: 2
+Line 61: [36m[1m❯ Version[22m[39m
+Line 62:   @netlify/build 35.1.0
+Line 63: [36m[1m​[22m[39m
+Line 64: [36m[1m❯ Flags[22m[39m
+Line 65:   accountId: 68a022c45536aecedf52728f
+Line 66:   baseRelDir: true
+Line 67:   buildId: 68a027be507a5d0008aee3f1
+Line 68:   deployId: 68a027be507a5d0008aee3f3
+Line 69: [36m[1m​[22m[39m
+Line 70: [36m[1m❯ Current directory[22m[39m
+Line 77:   production
+Line 78: [96m[1m​[22m[39m
+Line 79: [96m[1mbuild.command from netlify.toml                               [22m[39m
+Line 80: [96m[1m────────────────────────────────────────────────────────────────[22m[39m
+Line 81: ​
+Line 82: [36m$ npm run build[39m
+Line 83: > rest-express@1.0.0 build
+Line 84: > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+Line 85: sh: 1: vite: not found
+Line 86: [91m[1m​[22m[39m
+Line 87: [91m[1m"build.command" failed                                        [22m[39m
+Line 88: [91m[1m────────────────────────────────────────────────────────────────[22m[39m
+Line 89: ​
+Line 90:   [31m[1mError message[22m[39m
+Line 91:   Command failed with exit code 127: npm run build
+Line 92: ​
+Line 93:   [31m[1mError location[22m[39m
+Line 94:   In build.command from netlify.toml:
+Line 95:   npm run build
+Line 96: ​
+Line 97:   [31m[1mResolved config[22m[39m
+Line 98:   build:
+Line 99:     base: /opt/build/repo
+Line 100:     command: npm run build
+Line 101:     commandOrigin: config
+Line 102:     environment:
+Line 103:       - NODE_VERSION
+Line 104:       - NPM_FLAGS
+Line 105:       - NODE_ENV
+Line 106:     publish: /opt/build/repo/dist/public
+Line 107:     publishOrigin: config
+Line 108:   functionsDirectory: /opt/build/repo/netlify/functions
+Line 109:   headers:
+Line 110:     - for: /*
+      values:
+        Referrer-Policy: strict-origin-when-cross-origin
+        X-Content-Type-Options: nosniff
+   
+Line 111: Build failed due to a user error: Build script returned non-zero exit code: 2
+Line 112: Failing build: Failed to build site
+Line 113: Finished processing build request in 23.742s
