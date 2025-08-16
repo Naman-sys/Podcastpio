@@ -7,6 +7,9 @@ PodcastAI — Streamlit App (Dark Theme, Structured, Robust)
     1) st.secrets["GEMINI_API_KEY"]  (preferred for Streamlit Cloud)
     2) environment variable GEMINI_API_KEY
 • Clean dark UI, two-pane layout, history of generated scripts, exports.
+
+Run:
+    streamlit run app.py
 """
 
 from __future__ import annotations
@@ -40,14 +43,13 @@ st.markdown(
     """
 <style>
     :root {
-        --bg: #0b1220;          /* page bg */
-        --panel: #121a2b;       /* card bg */
-        --muted: #94a3b8;       /* secondary text */
-        --text: #e5e7eb;        /* text */
-        --brand: #6e7cff;       /* primary */
-        --brand-2: #8a5cf6;     /* gradient */
+        --bg: #0b1220;         
+        --panel: #121a2b;      
+        --muted: #94a3b8;      
+        --text: #e5e7eb;       
+        --brand: #6e7cff;      
+        --brand-2: #8a5cf6;    
         --ok: #10b981;
-        --warn: #f59e0b;
         --err: #ef4444;
     }
     .stApp { background: var(--bg); color: var(--text); }
@@ -58,7 +60,6 @@ st.markdown(
         padding: 24px 22px;
         color: white;
         margin: 12px 0 22px 0;
-        box-shadow: 0 10px 30px rgba(108, 99, 255, 0.25);
         text-align: center;
     }
     .hero h1 { margin: 0 0 6px 0; font-size: 2rem; font-weight: 800; }
@@ -71,13 +72,6 @@ st.markdown(
         padding: 16px 16px 12px 16px;
     }
 
-    textarea, .stTextInput>div>div>input {
-        background: #0f172a !important;
-        color: var(--text) !important;
-        border-radius: 10px !important;
-        border: 1px solid rgba(255,255,255,.1) !important;
-    }
-
     div.stButton>button {
         background: var(--brand) !important;
         color: white !important;
@@ -88,34 +82,21 @@ st.markdown(
     }
     div.stButton>button:hover { filter: brightness(1.08); }
 
-    .stTabs [role="tab"] {
-        background: #0f172a;
-        color: var(--muted);
-        border-radius: 10px;
-        padding: .5rem .9rem;
-        margin-right: .4rem;
-        border: 1px solid rgba(255,255,255,.06);
-    }
-    .stTabs [role="tab"][aria-selected="true"] {
-        background: var(--brand);
-        color: white;
-    }
-
     .muted { color: var(--muted); font-size: .9rem; }
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-# =========== Data Models ===========
+# ============
+# Data Classes
+# ============
 
 @dataclass
 class EpisodeDetails:
     duration: str
     category: str
     format: str
-    season: Optional[str] = None
-    episode: Optional[str] = None
 
 @dataclass
 class ShowNotes:
@@ -146,22 +127,29 @@ class PodcastScript:
     char_count: int
     created_at: str
 
-# =========== Session Helpers ===========
-def _init_state() -> None:
+# =====================
+# Session State Helpers
+# =====================
+
+def _init_state():
     if "history" not in st.session_state:
-        st.session_state.history: Dict[str, PodcastScript] = {}
+        st.session_state.history = {}
     if "current_id" not in st.session_state:
-        st.session_state.current_id: Optional[str] = None
+        st.session_state.current_id = None
     if "fetched" not in st.session_state:
-        st.session_state.fetched: Optional[str] = None
+        st.session_state.fetched = None
+
 _init_state()
 
-# =========== Gemini API ===========
-def get_gemini_key() -> Optional[str]:
+# ====================
+# Gemini API Utilities
+# ====================
+
+def get_gemini_key():
     key = st.secrets.get("GEMINI_API_KEY", None) if hasattr(st, "secrets") else None
     return key or os.getenv("GEMINI_API_KEY")
 
-def try_gemini_generate(prompt: str) -> Optional[str]:
+def try_gemini_generate(prompt: str):
     api_key = get_gemini_key()
     if not api_key:
         return None
@@ -174,51 +162,49 @@ def try_gemini_generate(prompt: str) -> Optional[str]:
     except Exception:
         return None
 
-# =========== Content Fetch ===========
-def fetch_article(url: str, max_chars: int = 8000) -> Optional[str]:
+# =========================
+# Content Processing
+# =========================
+
+def fetch_article(url: str, max_chars=8000):
     try:
-        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12)
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         r.raise_for_status()
     except Exception:
         return None
     soup = BeautifulSoup(r.text, "html.parser")
     for tag in soup(["script", "style", "nav", "footer", "header", "noscript"]):
         tag.decompose()
-    body = soup.select_one("article") or soup.select_one("main") or soup.body
-    text = body.get_text(" ", strip=True) if body else ""
-    text = re.sub(r"\s+", " ", html.unescape(text)).strip()
-    return text[:max_chars] if len(text) >= 120 else None
+    content = soup.get_text(" ", strip=True)
+    return re.sub(r"\s+", " ", html.unescape(content))[:max_chars]
 
-# =========== Local Fallback ===========
-def local_fallback_script(content: str, style: str, duration: str, show_name: str) -> GeneratedScript:
-    topics = ["Insights", "Trends", "Takeaways"]
-    details = EpisodeDetails(duration=f"~{duration} minutes", category="General", format=style.title())
-    intro = f"[INTRO MUSIC] Welcome to {show_name}! Let's dive in."
-    main = "Main discussion: Context, Why it matters, and Next steps."
-    outro = f"[OUTRO MUSIC] Thanks for listening to {show_name}!"
-    notes = ShowNotes(
-        key_topics=topics,
-        resources=["Transcript available", "Follow us for more"],
-        timestamps=[{"time": "0:00", "topic": "Intro"}, {"time": "2:00", "topic": "Main"}, {"time": "5:00", "topic": "Outro"}],
-        episode_details=details,
-    )
-    return GeneratedScript(intro=intro, main_content=main, outro=outro, show_notes=notes)
+# =========================
+# Local Script Generator
+# =========================
 
-# =========== Script Generation ===========
-def build_llm_prompt(content: str, style: str, duration: str, show_name: str) -> str:
-    return f"""
-Write a podcast script in {style} style for {show_name}.
-Duration: {duration} minutes.
-Content:
-{content[:2000]}
-Include JSON with intro, main_content, outro, and show_notes.
+def local_fallback_script(content, style, duration, show_name):
+    intro = f"""[INTRO MUSIC]
+Welcome to {show_name}! Let's dive into today's topic.
 """
+    main = """We'll break this down into key sections for clarity and insights."""
+    outro = f"""[OUTRO MUSIC]
+Thanks for listening to {show_name}!"""
+    notes = ShowNotes(
+        key_topics=["Insights", "Trends", "Takeaways"],
+        resources=["Transcript available", "Follow us for updates"],
+        timestamps=[{"time":"0:00","topic":"Intro"},{"time":"1:00","topic":"Main"},{"time":"3:00","topic":"Outro"}],
+        episode_details=EpisodeDetails(duration=f"{duration} min", category="General", format=style)
+    )
+    return GeneratedScript(intro, main, outro, notes)
 
-def generate_script(content: str, style: str, duration: str, show_name: str) -> GeneratedScript:
-    llm_text = try_gemini_generate(build_llm_prompt(content, style, duration, show_name))
+def generate_script(content, style, duration, show_name):
+    prompt = f"""Create a podcast script in {style} style, duration {duration} minutes, for {show_name}.
+Content:
+{content[:4000]}"""
+    llm_text = try_gemini_generate(prompt)
     if llm_text:
         try:
-            data = json.loads(llm_text.strip().strip("`"))
+            data = json.loads(llm_text)
             details = EpisodeDetails(**data["show_notes"]["episode_details"])
             notes = ShowNotes(
                 key_topics=data["show_notes"]["key_topics"],
@@ -226,75 +212,112 @@ def generate_script(content: str, style: str, duration: str, show_name: str) -> 
                 timestamps=data["show_notes"]["timestamps"],
                 episode_details=details,
             )
-            return GeneratedScript(intro=data["intro"], main_content=data["main_content"], outro=data["outro"], show_notes=notes)
+            return GeneratedScript(
+                intro=data["intro"], main_content=data["main_content"],
+                outro=data["outro"], show_notes=notes
+            )
         except Exception:
             pass
     return local_fallback_script(content, style, duration, show_name)
 
-# =========== Helpers ===========
-def script_to_txt(p: PodcastScript) -> str:
-    s = p.script
-    lines = [f"{p.title}", "INTRO:", s.intro, "MAIN:", s.main_content, "OUTRO:", s.outro]
-    return "\n\n".join(lines)
+# =========
+# UI Parts
+# =========
 
-def build_podcast_script(content: str, input_type: str, source_url: Optional[str], style: str, duration: str, show_name: str) -> PodcastScript:
-    gen = generate_script(content, style, duration, show_name)
-    pid = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
-    return PodcastScript(
-        id=pid,
-        title=f"{show_name} — {datetime.now().strftime('%Y-%m-%d')}",
-        input_content=content,
-        input_type=input_type,
-        source_url=source_url,
-        script=gen,
-        podcast_style=style,
-        target_duration=duration,
-        show_name=show_name,
-        word_count=len(content.split()),
-        char_count=len(content),
-        created_at=now,
+def hero():
+    st.markdown(
+        """<div class="hero"><h1>🎙️ PodcastAI</h1><p>Turn any text or URL into a polished podcast script.</p></div>""",
+        unsafe_allow_html=True,
     )
 
-# =========== UI ===========
-st.markdown('<div class="hero"><h1>🎙️ PodcastAI</h1><p>Turn articles into podcast scripts instantly.</p></div>', unsafe_allow_html=True)
+def script_to_txt(p: PodcastScript):
+    s = p.script
+    return f"""{p.title}
 
-left, right = st.columns([1, 1], gap="large")
+INTRO:
+{s.intro}
+
+MAIN:
+{s.main_content}
+
+OUTRO:
+{s.outro}
+
+KEY TOPICS: {', '.join(s.show_notes.key_topics)}
+"""
+
+# =========
+# Main View
+# =========
+
+hero()
+
+# Gemini indicator
+if get_gemini_key():
+    st.markdown("<p style='color: var(--ok)'>🟢 Gemini API Connected</p>", unsafe_allow_html=True)
+else:
+    st.markdown("<p style='color: var(--err)'>🔴 Gemini API Not Configured — using local fallback</p>", unsafe_allow_html=True)
+
+left, right = st.columns([1, 1])
 
 with left:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("📝 Input")
-    tabs = st.tabs(["✏️ Manual Text", "🔗 URL Import"])
+    tabs = st.tabs(["✏️ Manual", "🔗 URL"])
     with tabs[0]:
-        raw_text = st.text_area("Paste text...", height=220, label_visibility="collapsed")
+        raw_text = st.text_area("Paste text...", height=200, label_visibility="collapsed")
     with tabs[1]:
-        url = st.text_input("Paste article URL")
+        url = st.text_input("Paste URL")
         if st.button("Fetch", disabled=not url):
             text = fetch_article(url)
-            st.session_state.fetched = text if text else None
-            st.success("Fetched!") if text else st.error("Could not fetch.")
+            if text:
+                st.session_state.fetched = text
+                st.success("✅ Content fetched")
+            else:
+                st.error("Couldn’t extract content.")
+        if st.session_state.fetched:
+            st.text_area("Preview", st.session_state.fetched[:1000], height=150)
+
     st.markdown("---")
-    style = st.selectbox("Style", ["conversational", "professional"], index=0)
-    duration = st.selectbox("Duration", ["5-10", "10-20", "20+"], index=0)
+    style = st.selectbox("Style", ["conversational","professional","educational","interview"])
+    duration = st.selectbox("Duration", ["5-10","10-20","20-30"])
     show_name = st.text_input("Show Name", value="The Show")
-    content = (raw_text or "").strip() or (st.session_state.fetched or "")
-    can_generate = len(content) >= 40
-    if st.button("⚡ Generate Script", use_container_width=True, disabled=not can_generate):
-        ps = build_podcast_script(content, "url" if url and not raw_text else "text", url, style, duration, show_name)
+
+    content = (raw_text.strip() if raw_text else "") or (st.session_state.fetched or "")
+    if st.button("⚡ Generate Script", disabled=len(content) < 40):
+        ps = PodcastScript(
+            id=str(uuid.uuid4()),
+            title=f"{show_name} — {datetime.now().strftime('%Y-%m-%d')}",
+            input_content=content, input_type="text",
+            source_url=url if url else None,
+            script=generate_script(content, style, duration, show_name),
+            podcast_style=style, target_duration=duration, show_name=show_name,
+            word_count=len(content.split()), char_count=len(content),
+            created_at=datetime.utcnow().isoformat()+"Z"
+        )
         st.session_state.history[ps.id] = ps
         st.session_state.current_id = ps.id
         st.success("🎉 Script generated!")
 
+    if st.session_state.current_id:
+        ps = st.session_state.history[st.session_state.current_id]
+        st.markdown("---")
+        st.markdown("### 📊 Quick Episode Summary")
+        st.info(f"**Title:** {ps.title}\n\n**Words:** {ps.word_count} | **Characters:** {ps.char_count}\n\n**Target Duration:** {ps.target_duration} minutes")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
 with right:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🎬 Generated Script")
+
     if st.session_state.current_id:
-        script_obj: PodcastScript = st.session_state.history[st.session_state.current_id]
-        s = script_obj.script
+        ps = st.session_state.history[st.session_state.current_id]
+        s = ps.script
         t1, t2, t3, t4 = st.tabs(["Intro", "Main", "Outro", "Notes"])
-        with t1: st.text_area("Intro", s.intro, height=220)
-        with t2: st.text_area("Main", s.main_content, height=220)
-        with t3: st.text_area("Outro", s.outro, height=220)
+        with t1: st.text_area("Intro", s.intro, height=200)
+        with t2: st.text_area("Main", s.main_content, height=200)
+        with t3: st.text_area("Outro", s.outro, height=200)
         with t4:
             st.markdown("### 📝 Show Notes")
             st.markdown("**Key Topics:** " + ", ".join(s.show_notes.key_topics))
@@ -304,16 +327,11 @@ with right:
             for ts in s.show_notes.timestamps: st.markdown(f"- {ts['time']}: {ts['topic']}")
             st.markdown("**Episode Details:**")
             st.write(s.show_notes.episode_details.__dict__)
-        st.markdown("---")
-        e1, e2 = st.columns(2)
-        with e1:
-            st.download_button("📄 Export TXT", data=script_to_txt(script_obj), file_name=f"podcast-{script_obj.id[:8]}.txt")
-        with e2:
-            st.download_button("📊 Export JSON", data=json.dumps(asdict(script_obj), indent=2), file_name=f"podcast-{script_obj.id[:8]}.json")
-    else:
-        st.info("👈 Add content and click Generate.")
-    st.markdown("</div>", unsafe_allow_html=True)
 
-# Footer
-st.markdown("---")
-st.markdown("<p class='muted' style='text-align:center'>Built with Streamlit • Gemini optional • Local fallback included</p>", unsafe_allow_html=True)
+        e1, e2 = st.columns(2)
+        with e1: st.download_button("📄 Export TXT", data=script_to_txt(ps), file_name=f"{ps.id}.txt")
+        with e2: st.download_button("📊 Export JSON", data=json.dumps(asdict(ps), indent=2), file_name=f"{ps.id}.json")
+    else:
+        st.info("👈 Add content and generate a script.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
