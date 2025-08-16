@@ -1,5 +1,10 @@
-import { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
+
+// Use dynamic import for Google AI to avoid bundling issues
+async function getGoogleAI() {
+  const { GoogleGenerativeAI } = await import("@google/generative-ai");
+  return GoogleGenerativeAI;
+}
 
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
   // Set CORS headers
@@ -44,6 +49,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
         };
       }
 
+      const GoogleGenerativeAI = await getGoogleAI();
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 

@@ -33,6 +33,7 @@ if [ $? -eq 0 ]; then
     echo "- GEMINI_API_KEY (required for AI script generation)"
     echo ""
     echo "🎯 Build command for Netlify: npm run build"
+    echo "📋 Alternative: Use vite.config.netlify.ts for optimized builds"
     echo "📂 Publish directory: dist/public"
 else
     echo "❌ Build failed. Please check the error messages above."
