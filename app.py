@@ -1,5 +1,5 @@
 from __future__ import annotations
-import os, re, json, uuid, html, requests
+import os, re, json, uuid, html, requests, random
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Optional, Dict, Any, List
@@ -103,7 +103,7 @@ def try_gemini_generate(prompt: str):
         model = genai.GenerativeModel("gemini-1.5-pro")
         resp = model.generate_content(
             prompt,
-            generation_config={"max_output_tokens": 8192}
+            generation_config={"max_output_tokens": 8192, "temperature": 0.9, "top_p": 0.95}
         )
         return getattr(resp, "text", None)
     except Exception:
@@ -125,27 +125,37 @@ def fetch_article(url: str, max_chars=10000):
     return re.sub(r"\s+", " ", html.unescape(content))[:max_chars]
 
 # =====================
-# Local Fallback
+# Local Fallback (Dynamic)
 # =====================
 def local_fallback_script(content, style, duration, show_name):
-    intro = f"""[INTRO MUSIC FADES IN]
-Welcome to {show_name}, your trusted source for deep dives and engaging stories.
-This episode unpacks key issues in a rich, detailed way.
-"""
-    main = f"""[MAIN DISCUSSION]
-We’ll break the discussion into multiple sections, exploring background, insights, and impacts.
-Each section is designed to be in-depth and easy to follow.
-"""
-    outro = f"""[OUTRO]
-That’s all for today’s episode of {show_name}. Don’t forget to subscribe and stay tuned!
-"""
+    openers = [
+        f"Welcome back to another episode of {show_name}! Today we’re diving into fresh perspectives and unique stories.",
+        f"This is {show_name}, your trusted space for in-depth explorations and powerful storytelling.",
+        f"Thanks for tuning in to {show_name}, where curiosity meets creativity."
+    ]
+    transitions = [
+        "Let’s break this into key chapters, starting with the background.",
+        "Now that we’ve set the stage, it’s time to dive into deeper insights.",
+        "Let’s peel back the layers and uncover what really matters here."
+    ]
+    closers = [
+        f"That wraps up today’s deep dive on {show_name}. Stay curious, stay inspired!",
+        f"Thanks for listening to {show_name}. Until next time, keep learning and keep exploring!",
+        f"We hope you enjoyed today’s episode of {show_name}. Don’t forget to subscribe and share!"
+    ]
+    intro = random.choice(openers) + "\n\n" + "In this episode, we’ll take a deep dive into ideas that matter."
+    main = f"{random.choice(transitions)}\n\n" + \
+           f"This discussion is structured into multiple sections. First, we’ll explore the **context**. Then, we’ll move into **insights and perspectives**. Finally, we’ll wrap up with **implications and takeaways**."
+    outro = random.choice(closers)
+
     notes = ShowNotes(
-        key_topics=["Background", "Insights", "Impacts"],
-        resources=["Visit our site", "Follow us on socials"],
+        key_topics=["Context", "Insights", "Implications"],
+        resources=["Follow us on socials", "Read extended notes on our site"],
         timestamps=[
-            {"time":"0:00","topic":"Intro"},
-            {"time":"3:00","topic":"Main Discussion"},
-            {"time":"15:00","topic":"Outro"},
+            {"time": "0:00", "topic": "Intro"},
+            {"time": "5:00", "topic": "Context"},
+            {"time": "15:00", "topic": "Insights"},
+            {"time": "25:00", "topic": "Takeaways"},
         ],
         episode_details=EpisodeDetails(duration=f"{duration} min", category="General", format=style)
     )
@@ -156,19 +166,20 @@ That’s all for today’s episode of {show_name}. Don’t forget to subscribe a
 # =====================
 def generate_script(content, style, duration, show_name):
     prompt = f"""
-You are a professional podcast script writer. Generate a **long, detailed podcast script**.
+You are a professional podcast scriptwriter. Write a **unique and extended script** every time. 
+Inject variety: storytelling hooks, metaphors, transitions, jokes, analogies. 
 
 Show: "{show_name}"
 Style: {style}
 Target Duration: {duration} minutes
 
-Include:
-- A long INTRO (2–3 paragraphs)
-- MAIN section with **3–5 subsections**
-- A strong OUTRO
-- Show Notes with topics, resources, and timestamps
+Sections required:
+- INTRO (2–3 paragraphs, creative hooks)
+- MAIN (3–5 subsections with storytelling, analogies, and diverse structure)
+- OUTRO (memorable, call-to-action)
+- Show Notes (topics, timestamps, resources)
 
-Base it on this content:
+Use this as source:
 {content[:8000]}
 """
     llm_text = try_gemini_generate(prompt)
@@ -176,11 +187,11 @@ Base it on this content:
         return GeneratedScript(
             intro=llm_text[:800],
             main_content=llm_text,
-            outro="Thanks for tuning in — see you next time!",
+            outro="Thanks for tuning in — until next time!",
             show_notes=ShowNotes(
-                key_topics=["Deep Dive", "Insights", "Implications"],
-                resources=["Follow for updates", "More resources online"],
-                timestamps=[{"time":"0:00","topic":"Intro"},{"time":"10:00","topic":"Main"},{"time":"25:00","topic":"Outro"}],
+                key_topics=["Context","Insights","Implications","Future Outlook"],
+                resources=["Follow us on socials", "Visit our website for resources"],
+                timestamps=[{"time":"0:00","topic":"Intro"},{"time":"10:00","topic":"Main"},{"time":"30:00","topic":"Outro"}],
                 episode_details=EpisodeDetails(duration=duration, category="General", format=style)
             )
         )
@@ -189,7 +200,7 @@ Base it on this content:
 # =====================
 # UI
 # =====================
-st.markdown('<div class="hero"><h1>🎙️ PodcastAI</h1><p>Create extended podcast scripts with AI</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="hero"><h1>🎙️ PodcastAI</h1><p>Create unique podcast scripts with AI</p></div>', unsafe_allow_html=True)
 
 if get_gemini_key():
     st.markdown("<p style='color:#10b981'>🟢 Gemini API Connected</p>", unsafe_allow_html=True)
