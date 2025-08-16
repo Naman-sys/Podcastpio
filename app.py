@@ -21,6 +21,17 @@ from dataclasses import dataclass, asdict
 from typing import Optional, Dict, Any, List
 import requests
 from bs4 import BeautifulSoup
+st.markdown("""
+<style>
+/* Style ALL Streamlit alert boxes (info, warning, error, success) */
+.stAlert > div {
+    background-color: #1f2937 !important; /* dark background */
+    color: #f3f4f6 !important;            /* light text */
+    border-left: 4px solid #3b82f6 !important; /* blue left border */
+}
+</style>
+""", unsafe_allow_html=True)
+
 try:
     import google.generativeai as genai
     GENAI_AVAILABLE = True
