@@ -53,11 +53,14 @@ class PodcastScriptGenerator:
             
             # Extract title
             title = ""
-            if soup.title:
+            if soup.title and soup.title.string:
                 title = soup.title.string.strip()
             elif soup.find('h1'):
-                title = soup.find('h1').get_text().strip()
-            else:
+                h1_element = soup.find('h1')
+                if h1_element:
+                    title = h1_element.get_text().strip()
+            
+            if not title:
                 title = "Untitled Article"
             
             # Extract main content
@@ -97,6 +100,10 @@ class PodcastScriptGenerator:
     
     def generate_fallback_script(self, content: str, style: str, duration: str, show_name: str = "The Show") -> Dict[str, any]:
         """Generate a podcast script using local logic when APIs fail"""
+        
+        # Handle empty show name
+        if not show_name or show_name.strip() == "":
+            show_name = "The Show"
         
         # Analyze content
         words = content.lower().split()
@@ -222,7 +229,7 @@ Until then, keep questioning, keep learning, and I'll see you in the next episod
             }
         }
     
-    def generate_script_with_gemini(self, content: str, style: str, duration: str, show_name: str = "The Show") -> Dict[str, any]:
+    def generate_script_with_gemini(self, content: str, style: str, duration: str, show_name: str = "The Show") -> Optional[Dict[str, any]]:
         """Generate script using Google Gemini AI"""
         
         prompt = f"""You are a professional podcast script writer. Create an engaging, well-structured podcast script based on the provided content.
@@ -260,6 +267,8 @@ Format the response as JSON with this exact structure:
 Make the script conversational, engaging, and professional. Include music cues like [INTRO MUSIC FADES IN] and [TRANSITION MUSIC]. Ensure natural flow between segments."""
 
         try:
+            if not self.gemini_model:
+                return None
             response = self.gemini_model.generate_content(prompt)
             
             # Extract JSON from response
@@ -279,11 +288,14 @@ Make the script conversational, engaging, and professional. Include music cues l
             st.warning(f"Gemini API failed: {e}. Using fallback generation.")
             return None
     
-    def generate_script_with_openai(self, content: str, style: str, duration: str, show_name: str = "The Show") -> Dict[str, any]:
+    def generate_script_with_openai(self, content: str, style: str, duration: str, show_name: str = "The Show") -> Optional[Dict[str, any]]:
         """Generate script using OpenAI API"""
         
         try:
-            response = openai.ChatCompletion.create(
+            from openai import OpenAI
+            client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+            
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a professional podcast script writer. Always respond with valid JSON."},
@@ -299,10 +311,13 @@ Return JSON with intro, mainContent, outro, and showNotes fields."""}
             )
             
             response_text = response.choices[0].message.content
-            return json.loads(response_text)
+            if response_text:
+                return json.loads(response_text)
+            else:
+                return None
             
         except Exception as e:
-            st.warning(f"OpenAI API failed: {e}. Using fallback generation.")
+            print(f"OpenAI API failed: {e}. Using fallback generation.")
             return None
     
     def generate_script(self, content: str, style: str, duration: str, show_name: str = "The Show") -> Dict[str, any]:
