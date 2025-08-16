@@ -662,7 +662,7 @@ def main():
     # Display UI sections
     display_navigation()
     display_hero_section()
-    display_workflow_progress(1 if not st.session_state.current_script else 3)
+    # display_workflow_progress(1 if not st.session_state.current_script else 3)
     
     # Main content layout
     col1, col2 = st.columns([1, 1])
