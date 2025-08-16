@@ -32,9 +32,28 @@ import time
 load_dotenv()
 
 # Configure Google Gemini API
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY and genai:
-    genai.configure(api_key=GEMINI_API_KEY)
+def get_gemini_api_key():
+    """Get Gemini API key from environment or user input"""
+    # First try environment variable
+    env_key = os.getenv("GEMINI_API_KEY")
+    if env_key:
+        return env_key
+    
+    # Then check session state
+    if 'gemini_api_key' in st.session_state and st.session_state.gemini_api_key:
+        return st.session_state.gemini_api_key
+    
+    return None
+
+def configure_gemini_api(api_key: str):
+    """Configure Gemini API with the provided key"""
+    if api_key and genai:
+        try:
+            genai.configure(api_key=api_key)
+            return True
+        except Exception:
+            return False
+    return False
 
 # Data models
 @dataclass
@@ -271,15 +290,19 @@ Format the response as JSON with this exact structure:
 Make the script conversational, engaging, and professional. Include music cues like [INTRO MUSIC FADES IN] and [TRANSITION MUSIC]. Ensure natural flow between segments."""
 
     try:
-        if not GEMINI_API_KEY or not genai:
+        api_key = get_gemini_api_key()
+        if not api_key or not genai:
             raise Exception("Gemini API key not found or library not available")
+        
+        # Configure API with current key
+        configure_gemini_api(api_key)
             
         model = genai.GenerativeModel('gemini-1.5-pro')
         response = model.generate_content(
             f"{system_prompt}\n\nContent: {content}",
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json"
-            )
+            generation_config={
+                "response_mime_type": "application/json"
+            }
         )
         
         if not response.text:
@@ -503,30 +526,54 @@ def display_workflow_progress(current_step: int = 1):
     progress_html += "</div>"
     st.markdown(progress_html, unsafe_allow_html=True)
 
-def display_api_status():
-    """Display API connection status"""
+def display_api_setup():
+    """Display API key setup and status"""
     with st.container():
-        st.subheader("🔗 API Status")
+        st.subheader("🔑 API Configuration")
         
+        current_key = get_gemini_api_key()
+        
+        # API Key Input
+        with st.expander("🔐 Gemini API Key Setup", expanded=not current_key):
+            st.write("**Get your free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)**")
+            
+            api_key_input = st.text_input(
+                "Enter your Gemini API Key:",
+                type="password",
+                value=current_key if current_key else "",
+                placeholder="Enter your API key here...",
+                help="Your API key is stored securely in this session only"
+            )
+            
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if st.button("🔄 Update API Key", disabled=not api_key_input):
+                    if api_key_input:
+                        st.session_state.gemini_api_key = api_key_input
+                        if configure_gemini_api(api_key_input):
+                            st.success("✅ API key configured successfully!")
+                        else:
+                            st.error("❌ Failed to configure API key")
+                        st.rerun()
+            
+            with col2:
+                if st.button("🗑️ Clear Key"):
+                    if 'gemini_api_key' in st.session_state:
+                        del st.session_state.gemini_api_key
+                    st.rerun()
+        
+        # API Status Display
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.write("**Gemini API**")
+            st.write("**Gemini AI Status:**")
         with col2:
-            if GEMINI_API_KEY:
-                st.success("Connected")
+            if current_key:
+                st.success("🟢 Connected")
             else:
-                st.error("Not Connected")
+                st.error("🔴 Not Connected")
         
-        if not GEMINI_API_KEY:
-            st.warning("⚠️ **Gemini API Key Missing**")
-            st.info("""
-            To use the full AI-powered script generation:
-            1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-            2. Set the `GEMINI_API_KEY` environment variable
-            3. Restart the application
-            
-            **Note:** The app will work with fallback script generation even without the API key.
-            """)
+        if not current_key:
+            st.info("💡 **Without an API key:** The app will use fallback script generation with realistic content structure.")
 
 def export_script_as_text(script: PodcastScript) -> str:
     """Export script in text format"""
@@ -753,8 +800,8 @@ def main():
                 st.error("⚠️ Please provide at least 10 characters of content")
     
     with col2:
-        # Display API Status
-        display_api_status()
+        # Display API Configuration
+        display_api_setup()
         
         # Display Generated Script
         if st.session_state.current_script and st.session_state.current_script in st.session_state.generated_scripts:
